@@ -2,14 +2,15 @@ package com.hawcore.spark.java.test1;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.VoidFunction;
+import scala.Tuple2;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -25,7 +26,9 @@ public class TransformationOperation {
 
 //        filter(sc);
 
-        flatMap(sc);
+//        flatMap(sc);
+
+        groupByKey(sc);
 
         sc.close();
     }
@@ -91,5 +94,27 @@ public class TransformationOperation {
 //        });
 
         lines.flatMap(s -> Arrays.asList(s.split(" ")).iterator()).foreach(s -> System.out.println(s));
+    }
+
+    private static void groupByKey(JavaSparkContext sc) {
+        List<Tuple2<String, Integer>> scoreList = Arrays.asList(
+                new Tuple2<>("Class1", 80),
+                new Tuple2<>("Class2", 78),
+                new Tuple2<>("Class3", 68),
+                new Tuple2<>("Class1", 82),
+                new Tuple2<>("Class2", 62),
+                new Tuple2<>("Class1", 75),
+                new Tuple2<>("Class2", 90),
+                new Tuple2<>("Class3", 75)
+        );
+        JavaPairRDD<String, Integer> scores = sc.parallelizePairs(scoreList);
+        JavaPairRDD<String, Iterable<Integer>> classScores = scores.groupByKey();
+        classScores.foreach(new VoidFunction<Tuple2<String, Iterable<Integer>>>() {
+            @Override
+            public void call(Tuple2<String, Iterable<Integer>> tuple2) throws Exception {
+                System.out.println(tuple2._1 + ":" + tuple2._2.iterator());
+            }
+        });
+
     }
 }

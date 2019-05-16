@@ -1,8 +1,5 @@
 package com.hawcore.spark.scala.test3
 
-import java.util
-import java.util.{Arrays, List}
-
 import org.apache.spark.{SparkConf, SparkContext}
 
 /**
@@ -18,15 +15,15 @@ object TransformationOperation {
 
     //    map(sc)
 
-//    filter(sc)
+    //    filter(sc)
 
-      flatMap(sc)
+    flatMap(sc)
   }
 
   def map(sc: SparkContext): Unit = {
 
     val numbers = Array(1, 2, 3, 4, 5)
-    sc.parallelize(numbers).map(v => v * 2).foreach(println(_))
+    sc.parallelize(numbers, 2).map(v => v * 2).foreach(println(_))
   }
 
   def filter(sc: SparkContext): Unit = {
@@ -38,7 +35,7 @@ object TransformationOperation {
   def flatMap(sc: SparkContext): Unit = {
 
     val lineList = Array("hello you", "hello me", "hello world")
-    sc.parallelize(lineList).flatMap(s => s.split(" ")).foreach(println(_))
+    sc.parallelize(lineList, 2).flatMap(s => s.split(" ")).foreach(println(_))
   }
 
 }
