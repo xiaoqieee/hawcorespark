@@ -1,7 +1,11 @@
-package test
+package com.hawcore.spark.scala.test
 
-import org.apache.spark.{SparkContext}
+import org.apache.spark.SparkContext
 
+/**
+  * @author xn025665   
+  * @date Create on 2019/5/16 12:41 
+  */
 object TopK {
 
   def main(args: Array[String]): Unit = {
