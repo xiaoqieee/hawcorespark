@@ -26,21 +26,19 @@ object TransformationOperation {
   def map(sc: SparkContext): Unit = {
 
     val numbers = Array(1, 2, 3, 4, 5)
-
     sc.parallelize(numbers).map(v => v * 2).foreach(println(_))
   }
 
   def filter(sc: SparkContext): Unit = {
 
     val numbers = Array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-
     sc.parallelize(numbers, 2).filter(v => v % 2 == 0).foreach(println(_))
   }
 
   def flatMap(sc: SparkContext): Unit = {
+
     val lineList = Array("hello you", "hello me", "hello world")
     sc.parallelize(lineList).flatMap(s => s.split(" ")).foreach(println(_))
-
   }
 
 }
