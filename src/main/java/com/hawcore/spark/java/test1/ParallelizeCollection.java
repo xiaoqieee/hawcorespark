@@ -1,4 +1,4 @@
-package com.hawcore.spark.java.test;
+package com.hawcore.spark.java.test1;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
