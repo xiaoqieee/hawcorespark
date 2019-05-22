@@ -7,10 +7,12 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.VoidFunction;
 import scala.Tuple2;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -28,8 +30,15 @@ public class TransformationOperation {
 
 //        flatMap(sc);
 
-        groupByKey(sc);
+//        groupByKey(sc);
 
+//        reduceByKey(sc);
+
+//        sortByKey(sc);
+
+//        join(sc);
+
+        cogroup(sc);
         sc.close();
     }
 
@@ -108,13 +117,136 @@ public class TransformationOperation {
                 new Tuple2<>("Class3", 75)
         );
         JavaPairRDD<String, Integer> scores = sc.parallelizePairs(scoreList);
-        JavaPairRDD<String, Iterable<Integer>> classScores = scores.groupByKey();
-        classScores.foreach(new VoidFunction<Tuple2<String, Iterable<Integer>>>() {
+//        JavaPairRDD<String, Iterable<Integer>> classScores = scores.groupByKey();
+//        classScores.foreach(new VoidFunction<Tuple2<String, Iterable<Integer>>>() {
+//            @Override
+//            public void call(Tuple2<String, Iterable<Integer>> tuple2) throws Exception {
+//                System.out.println(tuple2._1 + ":" + toStringIterable(tuple2._2));
+//            }
+//        });
+
+        scores.groupByKey().foreach(tuple2 -> System.out.println(tuple2._1 + ":" + toStringIterable(tuple2._2)));
+
+    }
+
+    private static void reduceByKey(JavaSparkContext sc) {
+        List<Tuple2<String, Integer>> scoreList = Arrays.asList(
+                new Tuple2<>("Class1", 80),
+                new Tuple2<>("Class2", 78),
+                new Tuple2<>("Class3", 68),
+                new Tuple2<>("Class1", 82),
+                new Tuple2<>("Class2", 62),
+                new Tuple2<>("Class1", 75),
+                new Tuple2<>("Class2", 90),
+                new Tuple2<>("Class3", 75)
+        );
+        JavaPairRDD<String, Integer> scores = sc.parallelizePairs(scoreList);
+        JavaPairRDD<String, Integer> classScores = scores.reduceByKey(new Function2<Integer, Integer, Integer>() {
             @Override
-            public void call(Tuple2<String, Iterable<Integer>> tuple2) throws Exception {
-                System.out.println(tuple2._1 + ":" + tuple2._2.iterator());
+            public Integer call(Integer v1, Integer v2) throws Exception {
+                return v1 + v2;
+            }
+        });
+        classScores.foreach(new VoidFunction<Tuple2<String, Integer>>() {
+            @Override
+            public void call(Tuple2<String, Integer> tuple2) throws Exception {
+                System.out.println(tuple2._1 + ":" + tuple2._2);
             }
         });
 
+        scores.reduceByKey((v1, v2) -> v1 + v2).foreach(tuple2 -> System.out.println(tuple2._1 + ":" + tuple2._2));
+
+    }
+
+    private static void sortByKey(JavaSparkContext sc) {
+        List<Tuple2<String, Integer>> scoreList = Arrays.asList(
+                new Tuple2<>("Class1", 80),
+                new Tuple2<>("Class2", 78),
+                new Tuple2<>("Class3", 68),
+                new Tuple2<>("Class1", 82),
+                new Tuple2<>("Class2", 62),
+                new Tuple2<>("Class1", 75),
+                new Tuple2<>("Class2", 90),
+                new Tuple2<>("Class3", 75)
+        );
+        JavaPairRDD<String, Integer> scores = sc.parallelizePairs(scoreList);
+        JavaPairRDD<String, Integer> classScores = scores.sortByKey();
+        classScores.foreach(new VoidFunction<Tuple2<String, Integer>>() {
+            @Override
+            public void call(Tuple2<String, Integer> tuple2) throws Exception {
+                System.out.println(tuple2._1 + ":" + tuple2._2);
+            }
+        });
+
+        scores.sortByKey().foreach(tuple2 -> System.out.println(tuple2._1 + ":" + tuple2._2));
+
+    }
+
+    private static void join(JavaSparkContext sc) {
+        List<Tuple2<Integer, Integer>> scoreList = Arrays.asList(
+                new Tuple2<>(1, 80),
+                new Tuple2<>(2, 78),
+                new Tuple2<>(3, 68),
+                new Tuple2<>(4, 68)
+        );
+        List<Tuple2<Integer, String>> studentList = Arrays.asList(
+                new Tuple2<>(1, "zhangsan"),
+                new Tuple2<>(2, "lisi"),
+                new Tuple2<>(3, "wangwu"),
+                new Tuple2<>(5, "liuliu")
+        );
+        JavaPairRDD<Integer, Integer> scores = sc.parallelizePairs(scoreList);
+        JavaPairRDD<Integer, String> students = sc.parallelizePairs(studentList);
+
+        JavaPairRDD<Integer, Tuple2<String, Integer>> studentScores = students.join(scores);
+        studentScores.foreach(new VoidFunction<Tuple2<Integer, Tuple2<String, Integer>>>() {
+            @Override
+            public void call(Tuple2<Integer, Tuple2<String, Integer>> tuple2) throws Exception {
+                System.out.println(tuple2._1 + "(" + tuple2._2._1 + "," + tuple2._2._2 + ")");
+            }
+        });
+
+        students.join(scores).foreach(tuple2 -> System.out.println(tuple2._1 + "(" + tuple2._2._1 + "," + tuple2._2._2 + ")"));
+
+    }
+
+    private static void cogroup(JavaSparkContext sc) {
+        List<Tuple2<Integer, Integer>> scoreList = Arrays.asList(
+                new Tuple2<>(1, 80),
+                new Tuple2<>(2, 78),
+                new Tuple2<>(3, 68),
+                new Tuple2<>(4, 68)
+        );
+        List<Tuple2<Integer, String>> studentList = Arrays.asList(
+                new Tuple2<>(1, "zhangsan"),
+                new Tuple2<>(2, "lisi"),
+                new Tuple2<>(3, "wangwu"),
+                new Tuple2<>(5, "liuliu")
+        );
+        JavaPairRDD<Integer, Integer> scores = sc.parallelizePairs(scoreList);
+        JavaPairRDD<Integer, String> students = sc.parallelizePairs(studentList);
+
+        JavaPairRDD<Integer, Tuple2<Iterable<String>, Iterable<Integer>>> studentScores = students.cogroup(scores);
+        studentScores.foreach(new VoidFunction<Tuple2<Integer, Tuple2<Iterable<String>, Iterable<Integer>>>>() {
+            @Override
+            public void call(Tuple2<Integer, Tuple2<Iterable<String>, Iterable<Integer>>> tuple2) throws Exception {
+                System.out.println(tuple2._1 + ":(" + toStringIterable(tuple2._2._1) + "),(" + toStringIterable(tuple2._2._2) + ")");
+            }
+        });
+
+        students.cogroup(scores).foreach(tuple2 -> System.out.println(tuple2._1 + ":(" + (tuple2._2._1) + "),(" + (tuple2._2._2) + ")"));
+
+    }
+
+    private static <T> String toStringIterable(Iterable<T> iterable) {
+        if (null == iterable) {
+            return "null";
+        }
+        StringBuffer sb = new StringBuffer();
+        Iterator<T> iter = iterable.iterator();
+        while (iter.hasNext()) {
+            sb.append(iter.next().toString()).append(",");
+        }
+        return sb.toString();
     }
 }
